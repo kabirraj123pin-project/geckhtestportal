@@ -12,13 +12,12 @@
 
 SECRET_KEY=geckhtestportal9780
 
-MYSQL_HOST=geckhtestportal-geckhtestportal.c.aivencloud.com
+MYSQL_HOST=mysql-167d8069-geckhtestportal.f.aivencloud.com
 MYSQL_PORT=23335
 MYSQL_USER=avnadmin
-MYSQL_PASSWORD=PASTE_YOUR_AIVEN_PASSWORD_HERE
+MYSQL_PASSWORD=AVNS_5A-fFmcz_Xw2r6Ce4uF
 MYSQL_DB=college_exam_portal
 MYSQL_USE_SSL=true
-
 PYTHON_VERSION=3.11.9
 
 # Optional — only needed if you want real emails for "Forgot Password".
