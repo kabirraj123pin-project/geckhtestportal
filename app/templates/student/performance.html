@@ -1,0 +1,79 @@
+{% extends "dashboard_base.html" %}
+{% block title %}My Performance{% endblock %}
+{% block page_title %}My Performance{% endblock %}
+
+{% block sidebar_links %}
+<li class="nav-item mb-1"><a class="nav-link text-white-50" href="{{ url_for('student.test_list') }}"><i class="bi bi-file-earmark-check me-2"></i>Available Tests</a></li>
+<li class="nav-item mb-1"><a class="nav-link active" href="{{ url_for('student.performance') }}"><i class="bi bi-graph-up-arrow me-2"></i>My Performance</a></li>
+<li class="nav-item mb-1"><a class="nav-link text-white-50" href="{{ url_for('dashboard.student_dashboard') }}"><i class="bi bi-arrow-left me-2"></i>Back to Dashboard</a></li>
+{% endblock %}
+
+{% block dashboard_content %}
+
+<div class="stat-card mb-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h6 class="mb-0">Score Progress Over Time</h6>
+        <span class="badge bg-primary-subtle text-primary px-3 py-2">Average: {{ average_percentage }}%</span>
+    </div>
+    <canvas id="progressChart" height="90"></canvas>
+</div>
+
+<div class="data-table-card overflow-hidden">
+    <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+            <tr>
+                <th class="ps-3">Test</th>
+                <th>Score</th>
+                <th>Percentage</th>
+                <th>Date</th>
+                <th class="text-end pe-3">Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for r in results %}
+            <tr>
+                <td class="ps-3">{{ r.test_title }}</td>
+                <td>{{ r.score }} / {{ r.total_marks }}</td>
+                <td>{{ r.percentage }}%</td>
+                <td>{{ r.submitted_at.strftime('%d %b %Y') }}</td>
+                <td class="text-end pe-3">
+                    <a href="{{ url_for('student.test_result', test_id=r.test_id) }}" class="btn btn-sm btn-outline-primary">View</a>
+                </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="5" class="text-center text-muted py-4">No test results yet.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+<script>
+    const labels = {{ results|map(attribute='test_title')|list|tojson }};
+    const scores = {{ results|map(attribute='percentage')|list|tojson }};
+
+    new Chart(document.getElementById('progressChart'), {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Score %',
+                data: scores,
+                borderColor: '#764ba2',
+                backgroundColor: 'rgba(118, 75, 162, 0.15)',
+                fill: true,
+                tension: 0.3,
+                pointBackgroundColor: '#764ba2'
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: { y: { beginAtZero: true, max: 100 } },
+            plugins: { legend: { display: false } }
+        }
+    });
+</script>
+{% endblock %}

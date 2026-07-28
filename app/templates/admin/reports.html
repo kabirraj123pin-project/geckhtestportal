@@ -1,0 +1,170 @@
+{% extends "dashboard_base.html" %}
+{% block title %}Reports{% endblock %}
+{% block page_title %}Reports{% endblock %}
+
+{% block sidebar_links %}
+<li class="nav-item mb-1"><a class="nav-link text-white-50" href="{{ url_for('admin.teacher_list') }}"><i class="bi bi-people me-2"></i>Manage Teachers</a></li>
+<li class="nav-item mb-1"><a class="nav-link text-white-50" href="{{ url_for('admin.student_list') }}"><i class="bi bi-person-badge me-2"></i>Manage Students</a></li>
+<li class="nav-item mb-1"><a class="nav-link text-white-50" href="{{ url_for('admin.department_list') }}"><i class="bi bi-building me-2"></i>Departments</a></li>
+<li class="nav-item mb-1"><a class="nav-link text-white-50" href="{{ url_for('admin.subject_list') }}"><i class="bi bi-journal-text me-2"></i>Subjects</a></li>
+<li class="nav-item mb-1"><a class="nav-link active" href="{{ url_for('admin.reports') }}"><i class="bi bi-bar-chart me-2"></i>Reports</a></li>
+<li class="nav-item mb-1"><a class="nav-link text-white-50" href="{{ url_for('dashboard.admin_dashboard') }}"><i class="bi bi-arrow-left me-2"></i>Back to Dashboard</a></li>
+{% endblock %}
+
+{% block dashboard_content %}
+
+<!-- ===== Filters ===== -->
+<div class="stat-card mb-4">
+    <form method="GET" class="row g-3 align-items-end">
+        <div class="col-md-2">
+            <label class="form-label small">From Date</label>
+            <input type="date" name="date_from" class="form-control form-control-sm" value="{{ filters.date_from or '' }}">
+        </div>
+        <div class="col-md-2">
+            <label class="form-label small">To Date</label>
+            <input type="date" name="date_to" class="form-control form-control-sm" value="{{ filters.date_to or '' }}">
+        </div>
+        <div class="col-md-2">
+            <label class="form-label small">Department</label>
+            <select name="department_id" class="form-select form-select-sm">
+                <option value="">All</option>
+                {% for d in departments %}
+                <option value="{{ d.id }}" {{ 'selected' if filters.department_id|string == d.id|string else '' }}>{{ d.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-2">
+            <label class="form-label small">Subject</label>
+            <select name="subject_id" class="form-select form-select-sm">
+                <option value="">All</option>
+                {% for s in subjects %}
+                <option value="{{ s.id }}" {{ 'selected' if filters.subject_id|string == s.id|string else '' }}>{{ s.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-2">
+            <label class="form-label small">Teacher</label>
+            <select name="teacher_id" class="form-select form-select-sm">
+                <option value="">All</option>
+                {% for t in teachers %}
+                <option value="{{ t.id }}" {{ 'selected' if filters.teacher_id|string == t.id|string else '' }}>{{ t.full_name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-2 d-flex gap-2">
+            <button type="submit" class="btn btn-primary btn-sm w-100">
+                <i class="bi bi-funnel me-1"></i> Apply
+            </button>
+            <a href="{{ url_for('admin.reports') }}" class="btn btn-outline-secondary btn-sm">Reset</a>
+        </div>
+    </form>
+</div>
+
+<!-- ===== Summary Cards ===== -->
+<div class="row g-4 mb-4">
+    <div class="col-md-3">
+        <div class="stat-card">
+            <i class="bi bi-file-earmark-text fs-2 text-primary"></i>
+            <h3 class="mt-2 mb-0">{{ summary.tests_conducted }}</h3>
+            <p class="text-muted mb-0">Tests Conducted</p>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card">
+            <i class="bi bi-people fs-2 text-info"></i>
+            <h3 class="mt-2 mb-0">{{ summary.total_attempts }}</h3>
+            <p class="text-muted mb-0">Total Attempts</p>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card">
+            <i class="bi bi-graph-up fs-2 text-warning"></i>
+            <h3 class="mt-2 mb-0">{{ summary.average_percentage }}%</h3>
+            <p class="text-muted mb-0">Average Score</p>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card">
+            <i class="bi bi-check-circle fs-2 text-success"></i>
+            <h3 class="mt-2 mb-0">{{ summary.pass_percentage }}%</h3>
+            <p class="text-muted mb-0">Pass Percentage</p>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <!-- ===== Subject-Wise Summary ===== -->
+    <div class="col-md-6">
+        <div class="stat-card h-100">
+            <h6 class="mb-3"><i class="bi bi-journal-text me-2"></i>Subject-Wise Performance</h6>
+            <table class="table table-sm mb-0">
+                <thead><tr><th>Subject</th><th>Attempts</th><th>Avg %</th></tr></thead>
+                <tbody>
+                    {% for s in subject_summary %}
+                    <tr><td>{{ s.subject_name }}</td><td>{{ s.attempts }}</td><td>{{ s.avg_percentage }}%</td></tr>
+                    {% else %}
+                    <tr><td colspan="3" class="text-center text-muted">No data</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- ===== Teacher-Wise Summary ===== -->
+    <div class="col-md-6">
+        <div class="stat-card h-100">
+            <h6 class="mb-3"><i class="bi bi-person-workspace me-2"></i>Teacher-Wise Performance</h6>
+            <table class="table table-sm mb-0">
+                <thead><tr><th>Teacher</th><th>Tests</th><th>Attempts</th><th>Avg %</th></tr></thead>
+                <tbody>
+                    {% for t in teacher_summary %}
+                    <tr><td>{{ t.teacher_name }}</td><td>{{ t.tests_conducted }}</td><td>{{ t.attempts }}</td><td>{{ t.avg_percentage }}%</td></tr>
+                    {% else %}
+                    <tr><td colspan="4" class="text-center text-muted">No data</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- ===== Detailed Results ===== -->
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h6 class="mb-0"><i class="bi bi-list-ul me-2"></i>Detailed Results ({{ results|length }})</h6>
+    <a href="{{ url_for('admin.reports_export', **active_filters) }}" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-download me-1"></i> Export CSV
+    </a>
+</div>
+
+<div class="data-table-card overflow-hidden" style="max-height: 500px; overflow-y: auto;">
+    <table class="table table-hover align-middle mb-0">
+        <thead class="table-light" style="position: sticky; top: 0;">
+            <tr>
+                <th class="ps-3">Student</th>
+                <th>Test</th>
+                <th>Subject</th>
+                <th>Teacher</th>
+                <th>Score</th>
+                <th>%</th>
+                <th class="pe-3">Date</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for r in results %}
+            <tr>
+                <td class="ps-3">{{ r.student_name }}</td>
+                <td>{{ r.test_title }}</td>
+                <td>{{ r.subject_name or 'General' }}</td>
+                <td>{{ r.teacher_name or '—' }}</td>
+                <td>{{ r.score }} / {{ r.total_marks }}</td>
+                <td>{{ r.percentage }}%</td>
+                <td class="pe-3">{{ r.submitted_at.strftime('%d %b %Y') }}</td>
+            </tr>
+            {% else %}
+            <tr><td colspan="7" class="text-center text-muted py-4">No results match these filters.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% endblock %}

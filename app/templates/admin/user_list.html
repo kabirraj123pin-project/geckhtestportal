@@ -1,0 +1,118 @@
+{% extends "dashboard_base.html" %}
+{% block title %}{{ title }}{% endblock %}
+{% block page_title %}{{ title }}{% endblock %}
+
+{% block sidebar_links %}
+<li class="nav-item mb-1"><a class="nav-link {{ 'active' if role == 'teacher' else 'text-white-50' }}" href="{{ url_for('admin.teacher_list') }}"><i class="bi bi-people me-2"></i>Manage Teachers</a></li>
+<li class="nav-item mb-1"><a class="nav-link {{ 'active' if role == 'student' else 'text-white-50' }}" href="{{ url_for('admin.student_list') }}"><i class="bi bi-person-badge me-2"></i>Manage Students</a></li>
+<li class="nav-item mb-1"><a class="nav-link text-white-50" href="{{ url_for('dashboard.admin_dashboard') }}"><i class="bi bi-arrow-left me-2"></i>Back to Dashboard</a></li>
+{% endblock %}
+
+{% block dashboard_content %}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <input type="text" id="searchBox" class="form-control" placeholder="Search by name or email..." style="width: 300px;">
+    </div>
+    <div class="d-flex gap-2">
+        {% if role == 'teacher' %}
+        <a href="{{ url_for('admin.teacher_pending') }}" class="btn btn-outline-warning">
+            <i class="bi bi-hourglass-split me-1"></i> Pending Approvals
+        </a>
+        {% elif role == 'student' %}
+        <a href="{{ url_for('admin.student_pending') }}" class="btn btn-outline-warning">
+            <i class="bi bi-hourglass-split me-1"></i> Pending Approvals
+        </a>
+        {% endif %}
+        <a href="{{ url_for('admin.' + role + '_add') }}" class="btn btn-primary">
+            <i class="bi bi-plus-circle me-1"></i> Add {{ role.capitalize() }}
+        </a>
+    </div>
+</div>
+
+<div class="data-table-card overflow-hidden">
+    <table class="table table-hover align-middle mb-0" id="userTable">
+        <thead class="table-light">
+            <tr>
+                <th class="ps-3">Name</th>
+                {% if role == 'student' %}<th>Reg. No.</th>{% endif %}
+                <th>Email</th>
+                <th>Phone</th>
+                <th>Status</th>
+                <th>Joined</th>
+                <th class="text-end pe-3">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for user in users %}
+            <tr>
+                <td class="ps-3">{{ user.full_name }}</td>
+                {% if role == 'student' %}<td>{{ user.registration_number or '—' }}</td>{% endif %}
+                <td>{{ user.email }}</td>
+                <td>{{ user.phone or '—' }}</td>
+                <td>
+                    {% if user.is_active %}
+                        <span class="badge bg-success-subtle text-success">Active</span>
+                    {% else %}
+                        <span class="badge bg-secondary-subtle text-secondary">Inactive</span>
+                    {% endif %}
+                </td>
+                <td>{{ user.created_at.strftime('%d %b %Y') if user.created_at else '—' }}</td>
+                <td class="text-end pe-3">
+                    <a href="{{ url_for('admin.' + role + '_edit', user_id=user.id) }}" class="btn btn-sm btn-outline-primary">
+                        <i class="bi bi-pencil"></i>
+                    </a>
+                    <button type="button" class="btn btn-sm btn-outline-danger"
+                            data-bs-toggle="modal" data-bs-target="#deleteModal{{ user.id }}">
+                        <i class="bi bi-trash"></i>
+                    </button>
+
+                    <!-- Delete confirmation modal -->
+                    <div class="modal fade" id="deleteModal{{ user.id }}" tabindex="-1">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title">Confirm Delete</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                </div>
+                                <div class="modal-body">
+                                    Are you sure you want to delete <strong>{{ user.full_name }}</strong>?
+                                    This action cannot be undone.
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                    <form method="POST" action="{{ url_for('admin.' + role + '_delete', user_id=user.id) }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        <button type="submit" class="btn btn-danger">Yes, Delete</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="6" class="text-center py-4 text-muted">
+                    No {{ role }}s found yet. Click "Add {{ role.capitalize() }}" to create one.
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Simple client-side search filter (no page reload needed)
+    document.getElementById('searchBox').addEventListener('keyup', function () {
+        const query = this.value.toLowerCase();
+        const rows = document.querySelectorAll('#userTable tbody tr');
+        rows.forEach(row => {
+            row.style.display = row.textContent.toLowerCase().includes(query) ? '' : 'none';
+        });
+    });
+</script>
+{% endblock %}

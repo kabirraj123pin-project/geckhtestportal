@@ -1,0 +1,66 @@
+"""
+File: app/utils.py
+Small shared helpers used across multiple routes.
+"""
+
+import os
+import io
+import re
+import base64
+import uuid
+import qrcode
+from werkzeug.utils import secure_filename
+
+ALLOWED_IMAGE_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
+MAX_IMAGE_SIZE_MB = 5
+
+
+def save_uploaded_image(file_storage, subfolder):
+    """
+    Save an uploaded image file (profile photo, college logo, etc.) under
+    app/static/uploads/<subfolder>/ with a random filename (so uploads never
+    clash or overwrite each other), and return the path to store in the database.
+
+    Returns None if no file was actually chosen.
+    Raises ValueError if the file type isn't an allowed image format.
+    """
+    if not file_storage or file_storage.filename == '':
+        return None
+
+    extension = file_storage.filename.rsplit('.', 1)[-1].lower()
+    if extension not in ALLOWED_IMAGE_EXTENSIONS:
+        raise ValueError('Invalid file type. Allowed: ' + ', '.join(ALLOWED_IMAGE_EXTENSIONS))
+
+    # Random filename avoids collisions and keeps things simple/secure
+    filename = secure_filename(f'{uuid.uuid4().hex}.{extension}')
+
+    folder_path = os.path.join('app', 'static', 'uploads', subfolder)
+    os.makedirs(folder_path, exist_ok=True)
+
+    file_storage.save(os.path.join(folder_path, filename))
+
+    # This is the path used with url_for('static', filename=...)
+    return f'uploads/{subfolder}/{filename}'
+
+
+def generate_qr_code_base64(data):
+    """
+    Turn any text (e.g. a result summary or student ID info) into a QR code image,
+    returned as a base64 string ready to drop straight into an <img> tag —
+    no need to save a file to disk for this.
+    """
+    qr_image = qrcode.make(data)
+    buffer = io.BytesIO()
+    qr_image.save(buffer, format='PNG')
+    return base64.b64encode(buffer.getvalue()).decode('utf-8')
+
+
+def natural_sort_key(value):
+    """
+    Sort key that puts registration numbers in true numeric/alphabetical order,
+    whether they're plain numbers ("1", "2", "10") or mixed ("2024CS1001").
+    Without this, plain string sorting would wrongly put "10" before "2".
+    """
+    value = value or ''
+    return [int(chunk) if chunk.isdigit() else chunk.lower()
+            for chunk in re.split(r'(\d+)', value)]

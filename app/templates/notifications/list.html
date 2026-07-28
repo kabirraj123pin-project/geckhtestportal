@@ -1,0 +1,44 @@
+{% extends "dashboard_base.html" %}
+{% block title %}Notifications{% endblock %}
+{% block page_title %}Notifications{% endblock %}
+
+{% block sidebar_links %}
+{% if session.role == 'admin' %}
+    <li class="nav-item mb-1"><a class="nav-link text-white-50" href="{{ url_for('admin.teacher_list') }}"><i class="bi bi-people me-2"></i>Manage Teachers</a></li>
+    <li class="nav-item mb-1"><a class="nav-link text-white-50" href="{{ url_for('admin.student_list') }}"><i class="bi bi-person-badge me-2"></i>Manage Students</a></li>
+{% elif session.role == 'teacher' %}
+    <li class="nav-item mb-1"><a class="nav-link text-white-50" href="{{ url_for('teacher.test_create') }}"><i class="bi bi-plus-circle me-2"></i>Create Test</a></li>
+    <li class="nav-item mb-1"><a class="nav-link text-white-50" href="{{ url_for('teacher.test_list') }}"><i class="bi bi-file-earmark-text me-2"></i>My Tests</a></li>
+{% else %}
+    <li class="nav-item mb-1"><a class="nav-link text-white-50" href="{{ url_for('student.test_list') }}"><i class="bi bi-file-earmark-check me-2"></i>Available Tests</a></li>
+    <li class="nav-item mb-1"><a class="nav-link text-white-50" href="{{ url_for('student.performance') }}"><i class="bi bi-graph-up-arrow me-2"></i>My Performance</a></li>
+{% endif %}
+<li class="nav-item mb-1"><a class="nav-link active" href="{{ url_for('notifications.list_notifications') }}"><i class="bi bi-bell me-2"></i>Notifications</a></li>
+{% endblock %}
+
+{% block dashboard_content %}
+
+<div class="d-flex justify-content-end mb-3">
+    <a href="{{ url_for('notifications.mark_all_read') }}" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-check-all me-1"></i> Mark All as Read
+    </a>
+</div>
+
+{% for n in notifications %}
+<a href="{{ url_for('notifications.mark_read', notification_id=n.id) }}" class="text-decoration-none text-dark">
+    <div class="stat-card mb-3 {{ '' if n.is_read else 'border-start border-4 border-primary' }}">
+        <div class="d-flex justify-content-between">
+            <h6 class="mb-1">
+                {% if not n.is_read %}<span class="badge bg-primary me-2">New</span>{% endif %}
+                {{ n.title }}
+            </h6>
+            <span class="text-muted small">{{ n.created_at.strftime('%d %b %Y, %I:%M %p') }}</span>
+        </div>
+        <p class="mb-0 text-muted">{{ n.message }}</p>
+    </div>
+</a>
+{% else %}
+<div class="alert alert-info">You have no notifications yet.</div>
+{% endfor %}
+
+{% endblock %}

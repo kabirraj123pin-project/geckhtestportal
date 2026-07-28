@@ -1,0 +1,350 @@
+{% extends "base.html" %}
+{% block title %}{{ test.title }} — In Progress{% endblock %}
+
+{% block content %}
+<div class="exam-wrapper">
+
+    <!-- ===== Top Bar: Title, Timer, Fullscreen ===== -->
+    <div class="exam-topbar d-flex justify-content-between align-items-center px-3 py-2">
+        <h6 class="mb-0 text-white">{{ test.title }}</h6>
+        <div class="d-flex align-items-center gap-3">
+            <button type="button" class="btn btn-sm btn-outline-light" onclick="enterFullscreen()">
+                <i class="bi bi-arrows-fullscreen"></i> Fullscreen
+            </button>
+            <span class="badge bg-danger fs-6 px-3 py-2" id="timerDisplay">
+                <i class="bi bi-stopwatch me-1"></i> --:--
+            </span>
+        </div>
+    </div>
+
+    <div class="d-flex flex-column flex-lg-row">
+
+        <!-- ===== Main Question Area ===== -->
+        <div class="flex-grow-1 p-4">
+
+            {% for question in questions %}
+            <div class="question-block {{ 'd-block' if loop.first else 'd-none' }}" data-index="{{ loop.index0 }}" id="question-{{ loop.index0 }}">
+                <div class="stat-card">
+                    <span class="badge bg-secondary-subtle text-secondary mb-2">
+                        Question {{ loop.index }} of {{ questions|length }} &bull; {{ question.marks }} mark(s)
+                    </span>
+                    <p class="fw-semibold fs-5">{{ question.question_text }}</p>
+
+                    {% if question.question_type == 'single_choice' or question.question_type == 'true_false' %}
+                        {% for option in question.options %}
+                        <div class="form-check mb-2 p-3 border rounded option-choice">
+                            <input class="form-check-input" type="radio" name="q_{{ question.id }}"
+                                   value="{{ option.id }}" id="opt-{{ option.id }}"
+                                   {{ 'checked' if existing_answers.get(question.id) and existing_answers[question.id].selected_option_id == option.id else '' }}>
+                            <label class="form-check-label w-100" for="opt-{{ option.id }}">{{ option.option_text }}</label>
+                        </div>
+                        {% endfor %}
+
+                    {% elif question.question_type == 'multiple_choice' %}
+                        {% for option in question.options %}
+                        <div class="form-check mb-2 p-3 border rounded option-choice">
+                            <input class="form-check-input" type="checkbox" name="q_{{ question.id }}[]"
+                                   value="{{ option.id }}" id="opt-{{ option.id }}"
+                                   {{ 'checked' if existing_answers.get(question.id) and existing_answers[question.id].answer_text and option.id|string in existing_answers[question.id].answer_text.split(',') else '' }}>
+                            <label class="form-check-label w-100" for="opt-{{ option.id }}">{{ option.option_text }}</label>
+                        </div>
+                        {% endfor %}
+
+                    {% elif question.question_type in ('fill_blank', 'numerical') %}
+                        <input type="{{ 'number' if question.question_type == 'numerical' else 'text' }}"
+                               class="form-control" name="q_{{ question.id }}_text"
+                               placeholder="Type your answer here"
+                               value="{{ existing_answers[question.id].answer_text if existing_answers.get(question.id) else '' }}">
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+
+            <!-- ===== Navigation Buttons ===== -->
+            <div class="d-flex justify-content-between mt-3 flex-wrap gap-2">
+                <div>
+                    <button type="button" class="btn btn-outline-secondary" onclick="clearResponse()">
+                        <i class="bi bi-x-circle me-1"></i> Clear Response
+                    </button>
+                    <button type="button" class="btn btn-outline-warning" onclick="saveAndMove(currentIndex, true)">
+                        <i class="bi bi-bookmark-star me-1"></i> Mark for Review & Next
+                    </button>
+                </div>
+                <div>
+                    <button type="button" class="btn btn-outline-primary" id="prevBtn" onclick="saveAndMove(currentIndex - 1, false)">
+                        <i class="bi bi-arrow-left me-1"></i> Previous
+                    </button>
+                    <button type="button" class="btn btn-primary" id="nextBtn" onclick="saveAndMove(currentIndex + 1, false)">
+                        Save & Next <i class="bi bi-arrow-right ms-1"></i>
+                    </button>
+                    <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#submitModal">
+                        <i class="bi bi-check-circle me-1"></i> Submit Test
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== Question Palette ===== -->
+        <div class="exam-palette p-3">
+            <h6 class="mb-3">Question Palette</h6>
+            <div class="palette-grid mb-3">
+                {% for question in questions %}
+                <button type="button" class="palette-btn" id="palette-{{ loop.index0 }}"
+                        onclick="saveAndMove({{ loop.index0 }}, null)">{{ loop.index }}</button>
+                {% endfor %}
+            </div>
+            <div class="small">
+                <div class="mb-1"><span class="legend-box bg-success"></span> Answered</div>
+                <div class="mb-1"><span class="legend-box bg-warning"></span> Marked for Review</div>
+                <div class="mb-1"><span class="legend-box bg-danger"></span> Not Answered</div>
+                <div class="mb-1"><span class="legend-box bg-secondary"></span> Not Visited</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ===== Submit Confirmation Modal ===== -->
+<div class="modal fade" id="submitModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Submit Test?</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Once submitted, you cannot change your answers.</p>
+                <p class="mb-0" id="submitSummary">Checking your answers...</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Go Back</button>
+                <button type="button" class="btn btn-success" onclick="submitTest()">Yes, Submit</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Hidden real form used to perform the final submit (POST) -->
+<form id="submitForm" method="POST" action="{{ url_for('student.test_submit', test_id=test.id) }}" class="d-none">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+</form>
+
+{% endblock %}
+
+{% block scripts %}
+<style>
+    .exam-wrapper { min-height: 100vh; background: #f4f6fb; }
+    .exam-topbar { background: linear-gradient(90deg, #4e2a84, #764ba2); }
+    .exam-palette { width: 260px; background: white; border-left: 1px solid #e5e7eb; min-height: calc(100vh - 50px); }
+    .palette-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+    .palette-btn {
+        width: 40px; height: 40px; border-radius: 8px; border: 1px solid #d1d5db;
+        background: #f3f4f6; font-weight: 600; cursor: pointer;
+    }
+    .palette-btn.answered { background: #22c55e; color: white; border-color: #22c55e; }
+    .palette-btn.marked { background: #f59e0b; color: white; border-color: #f59e0b; }
+    .palette-btn.not-answered { background: #ef4444; color: white; border-color: #ef4444; }
+    .palette-btn.active-question { outline: 3px solid #4e2a84; }
+    .legend-box { display: inline-block; width: 14px; height: 14px; border-radius: 4px; margin-right: 6px; }
+    .option-choice:hover { background: #f8f9fa; cursor: pointer; }
+</style>
+
+<script>
+    const totalQuestions = {{ questions|length }};
+    const questionIds = [{% for q in questions %}{{ q.id }},{% endfor %}];
+    const questionTypes = {{ questions|map(attribute='question_type')|list|tojson }};
+    let currentIndex = 0;
+    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+    let remainingSeconds = {{ remaining_seconds }};
+
+    // Track status of every question: 'not-visited', 'answered', 'marked', 'not-answered'
+    let questionStatus = new Array(totalQuestions).fill('not-visited');
+
+    // Pre-fill status for questions that already have a saved answer (resuming an attempt)
+    const existingAnswers = {{ existing_answers|tojson }};
+    questionIds.forEach((qid, i) => {
+        const ans = existingAnswers[qid];
+        if (ans) {
+            if (ans.marked_for_review) {
+                questionStatus[i] = 'marked';
+            } else if (ans.selected_option_id || (ans.answer_text && ans.answer_text.trim() !== '')) {
+                questionStatus[i] = 'answered';
+            }
+        }
+    });
+
+    function renderPalette() {
+        for (let i = 0; i < totalQuestions; i++) {
+            const btn = document.getElementById('palette-' + i);
+            btn.classList.remove('answered', 'marked', 'not-answered', 'active-question');
+            if (questionStatus[i] === 'answered') btn.classList.add('answered');
+            else if (questionStatus[i] === 'marked') btn.classList.add('marked');
+            else if (questionStatus[i] === 'not-answered') btn.classList.add('not-answered');
+            if (i === currentIndex) btn.classList.add('active-question');
+        }
+    }
+
+    function showQuestion(index) {
+        document.querySelectorAll('.question-block').forEach(el => el.classList.add('d-none'));
+        document.getElementById('question-' + index).classList.remove('d-none');
+        currentIndex = index;
+        document.getElementById('prevBtn').disabled = (index === 0);
+        document.getElementById('nextBtn').innerText = (index === totalQuestions - 1) ? 'Save' : 'Save & Next';
+        renderPalette();
+    }
+
+    // Read whatever the student has selected/typed for a given question from the DOM
+    function readAnswer(index) {
+        const qId = questionIds[index];
+        const qType = questionTypes[index];
+        let selectedOptionId = null;
+        let answerText = null;
+
+        if (qType === 'single_choice' || qType === 'true_false') {
+            const checked = document.querySelector(`input[name="q_${qId}"]:checked`);
+            selectedOptionId = checked ? parseInt(checked.value) : null;
+        } else if (qType === 'multiple_choice') {
+            const checked = document.querySelectorAll(`input[name="q_${qId}[]"]:checked`);
+            answerText = Array.from(checked).map(c => c.value).join(',');
+        } else {
+            const input = document.querySelector(`input[name="q_${qId}_text"]`);
+            answerText = input ? input.value.trim() : '';
+        }
+
+        const hasAnswer = selectedOptionId !== null || (answerText && answerText.length > 0);
+        return { qId, selectedOptionId, answerText, hasAnswer };
+    }
+
+    // Save the CURRENT question's answer to the server, update its palette status, then move on
+    function saveAndMove(nextIndex, markForReview) {
+        const { qId, selectedOptionId, answerText, hasAnswer } = readAnswer(currentIndex);
+
+        fetch(`{{ url_for('student.save_answer', test_id=test.id) }}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+            body: JSON.stringify({
+                question_id: qId,
+                selected_option_id: selectedOptionId,
+                answer_text: answerText,
+                marked_for_review: markForReview
+            })
+        });
+
+        if (markForReview) {
+            questionStatus[currentIndex] = 'marked';
+        } else {
+            questionStatus[currentIndex] = hasAnswer ? 'answered' : 'not-answered';
+        }
+
+        if (nextIndex !== null && nextIndex >= 0 && nextIndex < totalQuestions) {
+            showQuestion(nextIndex);
+        } else {
+            renderPalette();
+        }
+    }
+
+    function clearResponse() {
+        const qType = questionTypes[currentIndex];
+        const qId = questionIds[currentIndex];
+        if (qType === 'single_choice' || qType === 'true_false') {
+            document.querySelectorAll(`input[name="q_${qId}"]`).forEach(r => r.checked = false);
+        } else if (qType === 'multiple_choice') {
+            document.querySelectorAll(`input[name="q_${qId}[]"]`).forEach(c => c.checked = false);
+        } else {
+            const input = document.querySelector(`input[name="q_${qId}_text"]`);
+            if (input) input.value = '';
+        }
+        questionStatus[currentIndex] = 'not-answered';
+        renderPalette();
+    }
+
+    // ===== Timer =====
+    function formatTime(seconds) {
+        const m = Math.floor(seconds / 60).toString().padStart(2, '0');
+        const s = Math.floor(seconds % 60).toString().padStart(2, '0');
+        return `${m}:${s}`;
+    }
+
+    function tickTimer() {
+        document.getElementById('timerDisplay').innerHTML =
+            `<i class="bi bi-stopwatch me-1"></i> ${formatTime(remainingSeconds)}`;
+        if (remainingSeconds <= 0) {
+            clearInterval(timerInterval);
+            alert("Time's up! Your test is being submitted automatically.");
+            submitTest();
+            return;
+        }
+        remainingSeconds--;
+    }
+    tickTimer();
+    const timerInterval = setInterval(tickTimer, 1000);
+
+    // ===== Auto-save every 15 seconds regardless of navigation =====
+    setInterval(() => {
+        const { qId, selectedOptionId, answerText } = readAnswer(currentIndex);
+        fetch(`{{ url_for('student.save_answer', test_id=test.id) }}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+            body: JSON.stringify({
+                question_id: qId,
+                selected_option_id: selectedOptionId,
+                answer_text: answerText,
+                marked_for_review: questionStatus[currentIndex] === 'marked'
+            })
+        });
+    }, 15000);
+
+    // ===== Submit =====
+    let isSubmitting = false;
+
+    function submitTest() {
+        isSubmitting = true;
+        saveAndMove(null, null);  // save whatever is currently on screen first
+        setTimeout(() => {
+            document.getElementById('submitForm').submit();
+        }, 300);
+    }
+
+    document.getElementById('submitModal').addEventListener('show.bs.modal', function () {
+        const answered = questionStatus.filter(s => s === 'answered').length;
+        const marked = questionStatus.filter(s => s === 'marked').length;
+        const notAnswered = totalQuestions - answered - marked;
+        document.getElementById('submitSummary').innerText =
+            `Answered: ${answered} | Marked for Review: ${marked} | Not Answered: ${notAnswered}`;
+    });
+
+    // ===== Fullscreen =====
+    function enterFullscreen() {
+        if (document.documentElement.requestFullscreen) {
+            document.documentElement.requestFullscreen();
+        }
+    }
+
+    // ===== Basic Anti-Cheat Measures =====
+    document.addEventListener('contextmenu', e => e.preventDefault());          // disable right-click
+    document.addEventListener('copy', e => e.preventDefault());                // disable copy
+    document.addEventListener('cut', e => e.preventDefault());                 // disable cut
+    document.addEventListener('paste', e => e.preventDefault());               // disable paste
+
+    // Switching tabs / minimizing the window immediately ends the test.
+    // This is intentionally strict — the exam is locked the moment focus is lost.
+    let examLocked = false;
+    document.addEventListener('visibilitychange', function () {
+        if (document.hidden && !examLocked && !isSubmitting) {
+            examLocked = true;
+            clearInterval(timerInterval);
+            alert('Switching tabs or windows is not allowed during this test. ' +
+                  'Your test is being submitted automatically.');
+            submitTest();
+        }
+    });
+
+    window.addEventListener('beforeunload', function (e) {
+        if (isSubmitting) return;  // don't warn when WE are the ones navigating away (on submit)
+        e.preventDefault();
+        e.returnValue = '';
+    });
+
+    // Initial render
+    renderPalette();
+</script>
+{% endblock %}

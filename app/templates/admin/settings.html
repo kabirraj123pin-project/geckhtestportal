@@ -1,0 +1,47 @@
+{% extends "dashboard_base.html" %}
+{% block title %}Settings{% endblock %}
+{% block page_title %}College Settings{% endblock %}
+
+{% block sidebar_links %}
+<li class="nav-item mb-1"><a class="nav-link text-white-50" href="{{ url_for('admin.teacher_list') }}"><i class="bi bi-people me-2"></i>Manage Teachers</a></li>
+<li class="nav-item mb-1"><a class="nav-link text-white-50" href="{{ url_for('admin.student_list') }}"><i class="bi bi-person-badge me-2"></i>Manage Students</a></li>
+<li class="nav-item mb-1"><a class="nav-link text-white-50" href="{{ url_for('admin.department_list') }}"><i class="bi bi-building me-2"></i>Departments</a></li>
+<li class="nav-item mb-1"><a class="nav-link text-white-50" href="{{ url_for('admin.subject_list') }}"><i class="bi bi-journal-text me-2"></i>Subjects</a></li>
+<li class="nav-item mb-1"><a class="nav-link text-white-50" href="{{ url_for('admin.reports') }}"><i class="bi bi-bar-chart me-2"></i>Reports</a></li>
+<li class="nav-item mb-1"><a class="nav-link active" href="{{ url_for('admin.settings') }}"><i class="bi bi-gear me-2"></i>Settings</a></li>
+<li class="nav-item mb-1"><a class="nav-link text-white-50" href="{{ url_for('dashboard.admin_dashboard') }}"><i class="bi bi-arrow-left me-2"></i>Back to Dashboard</a></li>
+{% endblock %}
+
+{% block dashboard_content %}
+<div class="stat-card" style="max-width: 520px;">
+    <form method="POST" enctype="multipart/form-data">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <div class="text-center mb-4">
+            {% if settings.logo_path %}
+            <img src="{{ url_for('static', filename=settings.logo_path) }}" alt="Current Logo"
+                 style="height: 80px; width: 80px; object-fit: cover; border-radius: 12px;" class="mb-2 border">
+            {% else %}
+            <i class="bi bi-mortarboard-fill display-3 text-primary"></i>
+            {% endif %}
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">College Name</label>
+            <input type="text" name="college_name" class="form-control"
+                   value="{{ settings.college_name }}" required>
+            <div class="form-text">Shown on the login page and every dashboard sidebar.</div>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">College Logo</label>
+            <input type="file" name="logo" class="form-control" accept="image/*">
+            <div class="form-text">PNG or JPG recommended. Leave empty to keep the current logo.</div>
+        </div>
+
+        <button type="submit" class="btn btn-primary">
+            <i class="bi bi-check-circle me-1"></i> Save Settings
+        </button>
+    </form>
+</div>
+{% endblock %}

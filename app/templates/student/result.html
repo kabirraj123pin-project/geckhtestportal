@@ -1,0 +1,93 @@
+{% extends "dashboard_base.html" %}
+{% block title %}Result - {{ test.title }}{% endblock %}
+{% block page_title %}Test Result{% endblock %}
+
+{% block sidebar_links %}
+<li class="nav-item mb-1"><a class="nav-link text-white-50" href="{{ url_for('student.test_list') }}"><i class="bi bi-file-earmark-check me-2"></i>Available Tests</a></li>
+<li class="nav-item mb-1"><a class="nav-link text-white-50" href="{{ url_for('student.performance') }}"><i class="bi bi-graph-up-arrow me-2"></i>My Performance</a></li>
+<li class="nav-item mb-1"><a class="nav-link text-white-50" href="{{ url_for('dashboard.student_dashboard') }}"><i class="bi bi-arrow-left me-2"></i>Back to Dashboard</a></li>
+{% endblock %}
+
+{% block dashboard_content %}
+
+<div id="printableResult">
+    <div class="stat-card text-center mb-4">
+        <h5 class="text-muted mb-1">{{ test.title }}</h5>
+        <h1 class="display-4 fw-bold text-primary mb-0">{{ result.score }} / {{ result.total_marks }}</h1>
+        <p class="text-muted">{{ result.percentage }}% Score</p>
+        <img src="data:image/png;base64,{{ qr_code_base64 }}" alt="Verification QR Code" style="height: 90px; width: 90px;">
+        <p class="text-muted small mb-0">Scan to verify this result</p>
+
+        <div class="row mt-4 g-3">
+            <div class="col-md-3 col-6">
+                <div class="p-3 rounded bg-success-subtle">
+                    <h4 class="mb-0 text-success">{{ correct_count }}</h4>
+                    <small>Correct</small>
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="p-3 rounded bg-danger-subtle">
+                    <h4 class="mb-0 text-danger">{{ wrong_count }}</h4>
+                    <small>Wrong</small>
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="p-3 rounded bg-secondary-subtle">
+                    <h4 class="mb-0 text-secondary">{{ skipped_count }}</h4>
+                    <small>Skipped</small>
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="p-3 rounded bg-primary-subtle">
+                    <h4 class="mb-0 text-primary">
+                        {% if rank %}#{{ rank }} / {{ total_participants }}{% else %}—{% endif %}
+                    </h4>
+                    <small>Your Rank</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== Review Answers ===== -->
+    <h5 class="mb-3">Review Your Answers</h5>
+    {% for question in breakdown %}
+    <div class="stat-card mb-3">
+        <span class="badge bg-secondary-subtle text-secondary mb-2">
+            Q{{ loop.index }} &bull; {{ question.marks }} mark(s)
+        </span>
+        <p class="fw-semibold mb-2">{{ question.question_text }}</p>
+
+        {% if question.is_correct == None %}
+            <p class="text-secondary mb-1"><i class="bi bi-dash-circle me-1"></i> Not answered (skipped)</p>
+        {% elif question.is_correct %}
+            <p class="text-success mb-1"><i class="bi bi-check-circle-fill me-1"></i> Your answer: {{ question.student_answer }} (Correct)</p>
+        {% else %}
+            <p class="text-danger mb-1"><i class="bi bi-x-circle-fill me-1"></i> Your answer: {{ question.student_answer or '—' }} (Incorrect)</p>
+            {% set correct_opt = question.options | selectattr('is_correct', 'equalto', 1) | first %}
+            {% if correct_opt %}
+            <p class="text-success mb-0"><i class="bi bi-check-circle me-1"></i> Correct answer: {{ correct_opt.option_text }}</p>
+            {% endif %}
+        {% endif %}
+    </div>
+    {% endfor %}
+</div>
+
+<div class="d-flex gap-2 mt-3 no-print">
+    <button type="button" class="btn btn-outline-primary" onclick="window.print()">
+        <i class="bi bi-printer me-1"></i> Print / Save as PDF
+    </button>
+    <a href="{{ url_for('student.test_list') }}" class="btn btn-primary">
+        <i class="bi bi-arrow-left me-1"></i> Back to Tests
+    </a>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<style>
+    @media print {
+        .sidebar, .no-print, .toast-container { display: none !important; }
+        main { padding: 0 !important; }
+    }
+</style>
+{% endblock %}

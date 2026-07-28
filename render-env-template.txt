@@ -1,0 +1,27 @@
+# =====================================================
+# RENDER ENVIRONMENT VARIABLES — Fill in your real values below,
+# then paste this WHOLE block into Render in one go:
+#
+#   Render Dashboard → your service → "Environment" (left sidebar,
+#   under "MANAGE") → look for a button like "Add from .env" or
+#   "Bulk Edit" → paste everything below → Save
+#
+# If you don't see a bulk/.env option, add each line one by one using
+# "Add Environment Variable" (Key = left side of "=", Value = right side).
+# =====================================================
+
+SECRET_KEY=geckhtestportal9780
+
+MYSQL_HOST=geckhtestportal-geckhtestportal.c.aivencloud.com
+MYSQL_PORT=23335
+MYSQL_USER=avnadmin
+MYSQL_PASSWORD=PASTE_YOUR_AIVEN_PASSWORD_HERE
+MYSQL_DB=college_exam_portal
+MYSQL_USE_SSL=true
+
+PYTHON_VERSION=3.11.9
+
+# Optional — only needed if you want real emails for "Forgot Password".
+# Leave blank and the OTP will just show on screen instead (still works).
+MAIL_USERNAME=
+MAIL_PASSWORD=
