@@ -28,7 +28,9 @@ class Question:
         cursor.execute(
             "SELECT * FROM questions WHERE test_id = %s ORDER BY id ASC", (test_id,)
         )
-        questions = cursor.fetchall()
+        # MySQLdb's fetchall() always returns a tuple (even with DictCursor rows) —
+        # convert to a list so features like question shuffling can modify it in place.
+        questions = list(cursor.fetchall())
         cursor.close()
 
         # Attach options to each question so templates can loop through them easily
@@ -83,6 +85,6 @@ class Option:
         cursor.execute(
             "SELECT * FROM options WHERE question_id = %s ORDER BY id ASC", (question_id,)
         )
-        options = cursor.fetchall()
+        options = list(cursor.fetchall())
         cursor.close()
         return options
