@@ -9,7 +9,25 @@ import re
 import base64
 import uuid
 import qrcode
+from datetime import datetime, timedelta
 from werkzeug.utils import secure_filename
+
+IST_OFFSET = timedelta(hours=5, minutes=30)
+
+
+def now_ist():
+    """
+    Current time as a naive datetime representing India Standard Time.
+
+    Why this exists: the database session is set to IST (see config.py),
+    so NOW() in SQL queries returns IST. But Python's own datetime.now()
+    depends on the server's system timezone (often UTC on cloud hosts like
+    Render), which would silently be 5 hours 30 minutes off from what's
+    stored/compared in the database. Using this everywhere Python needs
+    "now" for something that's saved to or compared against the database
+    keeps both sides consistent.
+    """
+    return datetime.utcnow() + IST_OFFSET
 
 ALLOWED_IMAGE_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
 MAX_IMAGE_SIZE_MB = 5

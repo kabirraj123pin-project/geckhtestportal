@@ -1,0 +1,29 @@
+# =====================================================
+# RENDER ENVIRONMENT VARIABLES — ready to paste
+#
+# Only change SECRET_KEY below (write any random text).
+# Everything else is already filled in with your Aiven details.
+#
+# Where to paste this in Render:
+#   Your Service → left sidebar "Environment" (under MANAGE)
+#   → look for "Add from .env" or "Bulk Edit" → paste this whole file
+#   → Save
+#
+# If there's no bulk-paste option, add each line one by one:
+# Key = left of "=", Value = right of "="
+# =====================================================
+
+SECRET_KEY=myCollegeApp2026SecretRandomText789xyz
+
+MYSQL_HOST=mysql-167d8069-geckhtestportal.f.aivencloud.com
+MYSQL_PORT=23335
+MYSQL_USER=avnadmin
+MYSQL_PASSWORD=AVNS_5A-fFmcz_Xw2r6Ce4uF
+MYSQL_DB=college_exam_portal
+MYSQL_USE_SSL=true
+
+PYTHON_VERSION=3.11.9
+
+# Optional — leave blank, Forgot Password OTP will show on screen instead
+MAIL_USERNAME=
+MAIL_PASSWORD=

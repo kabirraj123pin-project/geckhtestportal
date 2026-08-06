@@ -6,8 +6,8 @@ student refreshes the page or closes the browser, we know exactly
 when they started and can calculate how much time is left.
 """
 
-from datetime import datetime
 from app import mysql
+from app.utils import now_ist
 
 
 class TestAttempt:
@@ -63,6 +63,6 @@ class TestAttempt:
     @staticmethod
     def get_remaining_seconds(attempt, duration_minutes):
         """How many seconds does the student have left on the timer?"""
-        elapsed = (datetime.now() - attempt['start_time']).total_seconds()
+        elapsed = (now_ist() - attempt['start_time']).total_seconds()
         remaining = (duration_minutes * 60) - elapsed
         return max(0, int(remaining))

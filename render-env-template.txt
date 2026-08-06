@@ -10,7 +10,7 @@
 # "Add Environment Variable" (Key = left side of "=", Value = right side).
 # =====================================================
 
-SECRET_KEY=geckhtestportal9780
+SECRET_KEY=change-this-to-any-long-random-text-123456
 
 MYSQL_HOST=geckhtestportal-geckhtestportal.c.aivencloud.com
 MYSQL_PORT=23335

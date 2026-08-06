@@ -11,6 +11,7 @@ from flask_mail import Message
 from app import mail
 from app.models.user import User
 from app.models.department import Department
+from app.utils import now_ist
 
 auth_bp = Blueprint('auth', __name__)
 
@@ -170,7 +171,7 @@ def forgot_password():
 
         # ---- Generate a 6-digit OTP that expires in 10 minutes ----
         otp = str(random.randint(100000, 999999))
-        expires_at = datetime.now() + timedelta(minutes=10)
+        expires_at = now_ist() + timedelta(minutes=10)
         User.save_reset_otp(email, otp, expires_at)
 
         email_sent = _send_otp_email(email, otp)

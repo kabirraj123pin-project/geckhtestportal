@@ -27,12 +27,19 @@ class Config:
     #   MYSQL_SSL_CA=path/to/cert.pem   -> encrypted AND verified against that CA
     #   MYSQL_USE_SSL=true              -> just encrypted, no certificate verification
     #                                      (matches what worked locally with --ssl-mode=REQUIRED)
+    #
+    # We also force the MySQL session to India time (IST, +05:30). Without this,
+    # cloud MySQL servers default to UTC, so comparisons like "start_time <= NOW()"
+    # were off by 5 hours 30 minutes — a scheduled test wouldn't show as
+    # "available" until 5.5 hours after its real start time.
     _ssl_ca = os.getenv('MYSQL_SSL_CA')
     _use_ssl = os.getenv('MYSQL_USE_SSL', 'false').lower() == 'true'
+    _custom_options = {'init_command': "SET time_zone = '+05:30'"}
     if _ssl_ca:
-        MYSQL_CUSTOM_OPTIONS = {'ssl': {'ca': _ssl_ca}}
+        _custom_options['ssl'] = {'ca': _ssl_ca}
     elif _use_ssl:
-        MYSQL_CUSTOM_OPTIONS = {'ssl': {}}
+        _custom_options['ssl'] = {}
+    MYSQL_CUSTOM_OPTIONS = _custom_options
 
     # Session settings (security)
     PERMANENT_SESSION_LIFETIME = 1800   # session expires after 30 minutes
