@@ -5,8 +5,8 @@
 <div class="auth-wrapper d-flex align-items-center justify-content-center">
     <div class="glass-card p-4 p-md-5">
         <div class="text-center mb-4">
-            {% if college_settings.logo_path %}
-            <img src="{{ url_for('static', filename=college_settings.logo_path) }}" alt="Logo" style="height: 60px;" class="mb-2">
+            {% if college_settings.logo_mimetype %}
+            <img src="{{ url_for('media.logo') }}" alt="Logo" style="height: 60px;" class="mb-2">
             {% else %}
             <i class="bi bi-mortarboard-fill display-4 text-primary"></i>
             {% endif %}

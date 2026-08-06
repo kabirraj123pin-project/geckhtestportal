@@ -36,8 +36,12 @@ MAX_IMAGE_SIZE_MB = 5
 def save_uploaded_image(file_storage, subfolder):
     """
     Save an uploaded image file (profile photo, college logo, etc.) under
-    app/static/uploads/<subfolder>/ with a random filename (so uploads never
-    clash or overwrite each other), and return the path to store in the database.
+    app/static/uploads/<subfolder>/ with a random filename.
+
+    NOTE: on hosts with an ephemeral filesystem (like Render's free tier),
+    files saved here get wiped on every restart/redeploy. Use
+    read_image_for_db() instead for anything that needs to survive that —
+    this function is kept for local development only.
 
     Returns None if no file was actually chosen.
     Raises ValueError if the file type isn't an allowed image format.
@@ -59,6 +63,28 @@ def save_uploaded_image(file_storage, subfolder):
 
     # This is the path used with url_for('static', filename=...)
     return f'uploads/{subfolder}/{filename}'
+
+
+def read_image_for_db(file_storage):
+    """
+    Read an uploaded image file into raw bytes so it can be stored directly
+    in the database (as a LONGBLOB) instead of on disk. This is what makes
+    the college logo and profile photos survive restarts/redeploys on hosts
+    like Render, whose local filesystem gets wiped every time.
+
+    Returns (image_bytes, mimetype) — both None if no file was chosen.
+    Raises ValueError if the file type isn't an allowed image format.
+    """
+    if not file_storage or file_storage.filename == '':
+        return None, None
+
+    extension = file_storage.filename.rsplit('.', 1)[-1].lower()
+    if extension not in ALLOWED_IMAGE_EXTENSIONS:
+        raise ValueError('Invalid file type. Allowed: ' + ', '.join(ALLOWED_IMAGE_EXTENSIONS))
+
+    mimetype = file_storage.mimetype or f'image/{extension}'
+    image_bytes = file_storage.read()
+    return image_bytes, mimetype
 
 
 def generate_qr_code_base64(data):

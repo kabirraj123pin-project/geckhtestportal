@@ -13,16 +13,16 @@
 <div id="idCardPrintable" class="mx-auto" style="max-width: 380px;">
     <div class="id-card">
         <div class="id-card-header text-center py-3">
-            {% if college_settings.logo_path %}
-            <img src="{{ url_for('static', filename=college_settings.logo_path) }}" alt="Logo" style="height: 36px;">
+            {% if college_settings.logo_mimetype %}
+            <img src="{{ url_for('media.logo') }}" alt="Logo" style="height: 36px;">
             {% endif %}
             <h6 class="text-white mb-0 mt-1">{{ college_settings.college_name }}</h6>
             <small class="text-white-50">Student Identity Card</small>
         </div>
 
         <div class="p-4 text-center bg-white">
-            {% if student.profile_photo %}
-            <img src="{{ url_for('static', filename=student.profile_photo) }}" alt="Photo"
+            {% if student.profile_photo_mimetype %}
+            <img src="{{ url_for('media.profile_photo', user_id=student.id) }}" alt="Photo"
                  style="height: 110px; width: 110px; object-fit: cover; border-radius: 50%;" class="border border-3 border-primary mb-3">
             {% else %}
             <i class="bi bi-person-circle display-1 text-secondary mb-3"></i>

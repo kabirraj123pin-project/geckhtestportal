@@ -36,6 +36,7 @@ def create_app():
     from app.routes.teacher import teacher_bp
     from app.routes.student import student_bp
     from app.routes.notifications import notifications_bp
+    from app.routes.media import media_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(dashboard_bp)
@@ -43,6 +44,7 @@ def create_app():
     app.register_blueprint(teacher_bp)
     app.register_blueprint(student_bp)
     app.register_blueprint(notifications_bp)
+    app.register_blueprint(media_bp)
 
     # ---- Make notification data available to every template automatically ----
     # (so the bell icon in the top bar always has fresh data, without every
@@ -60,11 +62,13 @@ def create_app():
             context['nav_unread_count'] = Notification.get_unread_count(session['user_id'])
             context['nav_recent_notifications'] = Notification.get_recent(session['user_id'], limit=5)
             current_user = User.find_by_id(session['user_id'])
-            context['nav_profile_photo'] = current_user['profile_photo'] if current_user else None
+            context['nav_profile_photo'] = bool(current_user and current_user.get('profile_photo_mimetype'))
+            context['nav_user_id'] = session['user_id']
         else:
             context['nav_unread_count'] = 0
             context['nav_recent_notifications'] = []
             context['nav_profile_photo'] = None
+            context['nav_user_id'] = None
 
         return context
 

@@ -193,9 +193,12 @@ class User:
         cursor.close()
 
     @staticmethod
-    def update_profile_photo(user_id, photo_path):
+    def update_profile_photo(user_id, photo_data, mimetype):
         cursor = mysql.connection.cursor()
-        cursor.execute("UPDATE users SET profile_photo = %s WHERE id = %s", (photo_path, user_id))
+        cursor.execute(
+            "UPDATE users SET profile_photo_data = %s, profile_photo_mimetype = %s WHERE id = %s",
+            (photo_data, mimetype, user_id)
+        )
         mysql.connection.commit()
         cursor.close()
 

@@ -14,7 +14,7 @@ from app.models.subject import Subject
 from app.models.notification import Notification
 from app.models.report import Report
 from app.models.settings import Settings
-from app.utils import save_uploaded_image
+from app.utils import read_image_for_db
 from app.routes.dashboard import login_required
 
 admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
@@ -484,12 +484,12 @@ def settings():
         logo_file = request.files.get('logo')
 
         try:
-            logo_path = save_uploaded_image(logo_file, 'logo')
+            logo_data, logo_mimetype = read_image_for_db(logo_file)
         except ValueError as error:
             flash(str(error), 'danger')
             return render_template('admin/settings.html', settings=current_settings)
 
-        Settings.update(college_name, logo_path)
+        Settings.update(college_name, logo_data, logo_mimetype)
         flash('Settings updated successfully.', 'success')
         return redirect(url_for('admin.settings'))
 

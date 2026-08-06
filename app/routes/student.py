@@ -16,7 +16,7 @@ from app.models.student_answer import StudentAnswer
 from app.models.result import Result
 from app.models.user import User
 from app.models.notification import Notification
-from app.utils import save_uploaded_image, generate_qr_code_base64
+from app.utils import read_image_for_db, generate_qr_code_base64
 from app.routes.dashboard import login_required
 
 student_bp = Blueprint('student', __name__, url_prefix='/student')
@@ -252,9 +252,9 @@ def profile():
 
         # ---- Profile photo (optional — only updated if a new file was chosen) ----
         try:
-            photo_path = save_uploaded_image(request.files.get('profile_photo'), 'profiles')
-            if photo_path:
-                User.update_profile_photo(student_id, photo_path)
+            photo_data, photo_mimetype = read_image_for_db(request.files.get('profile_photo'))
+            if photo_data:
+                User.update_profile_photo(student_id, photo_data, photo_mimetype)
         except ValueError as error:
             flash(str(error), 'danger')
             return render_template('student/profile.html', user=user)

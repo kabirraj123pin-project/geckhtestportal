@@ -28,13 +28,15 @@ class Settings:
         return settings
 
     @staticmethod
-    def update(college_name, logo_path=None):
-        """Update the college name, and the logo path only if a new one was uploaded"""
+    def update(college_name, logo_data=None, logo_mimetype=None):
+        """Update the college name, and the logo only if a new one was uploaded"""
         cursor = mysql.connection.cursor()
-        if logo_path:
+        if logo_data:
             cursor.execute(
-                "UPDATE college_settings SET college_name = %s, logo_path = %s WHERE id = 1",
-                (college_name, logo_path)
+                """UPDATE college_settings
+                   SET college_name = %s, logo_data = %s, logo_mimetype = %s
+                   WHERE id = 1""",
+                (college_name, logo_data, logo_mimetype)
             )
         else:
             cursor.execute(

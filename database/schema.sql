@@ -26,6 +26,8 @@ CREATE TABLE users (
     department_id INT NULL,
     semester INT NULL,
     profile_photo VARCHAR(255) DEFAULT NULL,
+    profile_photo_data LONGBLOB NULL,       -- actual image bytes (persists across restarts)
+    profile_photo_mimetype VARCHAR(50) NULL,
     is_active TINYINT(1) DEFAULT 1,       -- must be approved by admin to become active
     reset_otp VARCHAR(6) NULL,            -- one-time password for "Forgot Password"
     reset_otp_expires DATETIME NULL,      -- when that OTP stops being valid
@@ -176,7 +178,9 @@ CREATE TABLE notifications (
 CREATE TABLE college_settings (
     id INT PRIMARY KEY DEFAULT 1,
     college_name VARCHAR(200) DEFAULT 'College Exam Portal',
-    logo_path VARCHAR(255) DEFAULT NULL
+    logo_path VARCHAR(255) DEFAULT NULL,
+    logo_data LONGBLOB NULL,               -- actual image bytes (persists across restarts)
+    logo_mimetype VARCHAR(50) NULL
 );
 
 INSERT INTO college_settings (id, college_name) VALUES (1, 'College Exam Portal');

@@ -82,6 +82,7 @@ pip install -r requirements.txt
 > mysql -u root -p college_exam_portal < database/migration_4_notifications.sql
 > mysql -u root -p college_exam_portal < database/migration_5_settings_and_photos.sql
 > mysql -u root -p college_exam_portal < database/migration_6_student_registration.sql
+> mysql -u root -p college_exam_portal < database/migration_7_images_in_db.sql
 
 > ⚠️ **Important behavior changes after migration_6:**
 > - Students now log in with their **Registration Number** (not email) — the login page field is labeled "Email or Registration Number" and accepts both.
